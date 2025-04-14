@@ -507,3 +507,33 @@ VALUES (
         0,
         NULL
     );
+--@block
+SELECT *
+FROM mtgmatches
+WHERE Decklist LIKE '%Eluge%'
+ORDER BY date ASC;
+--@block 
+CREATE TABLE Users(
+    userid INT PRIMARY KEY,
+    firstname VARCHAR(32),
+    lastname VARCHAR(32)
+);
+--@block 
+INSERT INTO users(userid, firstname, lastname)
+VALUES(0, 'Thomas', 'Dinh'),
+    (1, 'Peter', 'Geheim'),
+    (2, 'Kristian', 'Privat'),
+    (3, 'Steven', 'Secret'),
+    (4, 'Olli', 'Diskret');
+--@block    
+CREATE TABLE Decks(
+    deckid INT,
+    deckname VARCHAR(32),
+    partnername VARCHAR(32),
+    color VARCHAR(16),
+    manavalue INT,
+    deckownerid INT NOT NULL,
+    PRIMARY KEY (deckid),
+    FOREIGN KEY (deckownerid) REFERENCES users(userid)
+);
+--@block
