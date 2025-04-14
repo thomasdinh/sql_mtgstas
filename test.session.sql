@@ -537,3 +537,11 @@ CREATE TABLE Decks(
     FOREIGN KEY (deckownerid) REFERENCES users(userid)
 );
 --@block
+INSERT INTO decks(deckid, deckname, color, manavalue, deckownerid)
+VALUES(0, 'Pantlaza', 'RGW', 5, 0),
+    (1, 'Mishra', 'BUR', 5, 0),
+    (2, 'Ghired', 'RGW', 3, 0);
+--@block
+SELECT *
+FROM users
+    INNER JOIN decks ON users.userid = decks.deckownerid;
