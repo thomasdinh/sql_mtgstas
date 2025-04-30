@@ -542,6 +542,14 @@ VALUES(0, 'Pantlaza', 'RGW', 5, 0),
     (1, 'Mishra', 'BUR', 5, 0),
     (2, 'Ghired', 'RGW', 3, 0);
 --@block
-SELECT *
+SELECT deckname,
+    firstname,
+    lastname
 FROM users
     INNER JOIN decks ON users.userid = decks.deckownerid;
+--@block
+ALTER TABLE decks
+ADD image_url VARCHAR(256);
+--@block
+SELECT *
+FROM decks
