@@ -552,4 +552,4 @@ ALTER TABLE decks
 ADD image_url VARCHAR(256);
 --@block
 SELECT *
-FROM decks
+FROM mtgmatches

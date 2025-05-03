@@ -123,8 +123,8 @@ def track_losses_against_decks(deckname):
 
     return losses
 
-def calculate_win_rate_against_decks(deckname):
-    data = all_info_matches_of_deck(deckname=deckname)
+def calculate_win_rate_against_decks(deckname, data = None ):
+    data = data if data is not None else all_info_matches_of_deck(deckname=deckname)
     win_loss_record = {}
 
     deckname = deckname.strip()  # Strip whitespace from the deckname
