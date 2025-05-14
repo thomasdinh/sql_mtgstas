@@ -560,4 +560,7 @@ VALUES (1, 'Thomas'),
     (3, 'Kristian'),
     (4, 'Leon'),
     (5, 'Khang'),
-    (6, 'Olli')
+    (6, 'Olli'),
+    --@block
+INSERT INTO Player (PlayerID, Name)
+VALUES (7, 'Steven')
