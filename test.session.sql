@@ -552,4 +552,12 @@ ALTER TABLE decks
 ADD image_url VARCHAR(256);
 --@block
 SELECT *
-FROM mtgmatches
+FROM mtgmatches --@block
+    -- Insert into Player table
+INSERT INTO Player (PlayerID, Name)
+VALUES (1, 'Thomas'),
+    (2, 'Peter'),
+    (3, 'Kristian'),
+    (4, 'Leon'),
+    (5, 'Khang'),
+    (6, 'Olli')
