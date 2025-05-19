@@ -14,77 +14,6 @@ CREATE TABLE Deck (
     FOREIGN KEY (DeckOwnerID) REFERENCES Player(PlayerID)
 );
 --@block
-CREATE TABLE MTGMatches (
-    MatchID INT PRIMARY KEY,
-    DeckLists TEXT NOT NULL,
-    Date TEXT,
-    WinnerID INT,
-    FOREIGN KEY (WinnerID) REFERENCES Deck(DeckID)
-);
---@block
-CREATE TABLE DeckWin (
-    MatchID INT,
-    DeckID INT,
-    OpponentDeckID TEXT,
-    -- (List of opponents lost: 2,3,4)
-    Result INT NOT NULL,
-    Date TEXT NOT NULL,
-    PRIMARY KEY (MatchID, DeckID),
-    FOREIGN KEY (MatchID) REFERENCES MTGMatches(MatchID),
-    FOREIGN KEY (DeckID) REFERENCES Deck(DeckID)
-);
---@block
-CREATE TABLE DeckLose (
-    MatchID INT,
-    DeckID INT,
-    OpponentDeckID INT,
-    Result INT NOT NULL,
-    Date Text NOT NULL,
-    PRIMARY KEY (MatchID, DeckID),
-    FOREIGN KEY (MatchID) REFERENCES MTGMatches(MatchID),
-    FOREIGN KEY (DeckID) REFERENCES Deck(DeckID)
-);
---@block
-CREATE INDEX idx_deck_owner ON Deck(DeckOwnerID);
-CREATE INDEX idx_match_winner ON MTGMatches(WinnerID);
-CREATE INDEX idx_deckwin_match ON DeckWin(MatchID);
-CREATE INDEX idx_decklose_match ON DeckLose(MatchID);
---@block
-ALTER TABLE DeckWin
-ADD CONSTRAINT chk_result CHECK (Result IN (0, 1, 2));
--- 1 for win, 2 for draw, 0 for loss
---@block
-ALTER TABLE DeckLose
-ADD CONSTRAINT chk_lose_result CHECK (Result IN (0, 1, 2, 3));
--- 1 for win, 2 for draw, 0 for loss
-SELECT *
-FROM mtgmatches --@block
-    -- Insert into Player table
-INSERT INTO Player (PlayerID, Name)
-VALUES (1, 'Thomas'),
-    (2, 'Peter'),
-    (3, 'Kristian'),
-    (4, 'Leon'),
-    (5, 'Khang'),
-    (6, 'Olli'),
-    (7, 'Steven'),
-    (8, 'Hoang');
---@block
-CREATE TABLE Playgroup (
-    GroupID INT PRIMARY KEY,
-    GroupName CHAR(128) NOT NULL
-);
-CREATE TABLE PlaygroupPlayer (
-    GroupID INT,
-    PlayerID INT,
-    PRIMARY KEY (GroupID, PlayerID),
-    FOREIGN KEY (GroupID) REFERENCES Playgroup(GroupID),
-    FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID)
-);
-INSERT INTO Playgroup (GroupID, GroupName)
-VALUES (1, 'Wartenberg Group'),
-    (2, 'Leon Group');
---@block
 INSERT INTO Deck (
         DeckID,
         DeckName,
@@ -100,34 +29,16 @@ VALUES (
         'https://cards.scryfall.io/art_crop/front/6/7/673c21f8-02b6-4ac4-b2fc-df065b4ac662.jpg?1726285172',
         '{4}GU',
         NULL
-    );
---@block
-INSERT INTO Deck (
-        DeckID,
-        DeckName,
-        DeckOwnerID,
-        DeckImgURL,
-        DeckColor,
-        DeckURL
-    )
-VALUES (
+    ),
+    (
         2,
         'Animar',
         8,
         'https://cards.scryfall.io/art_crop/front/a/3/a3da57d0-1ae3-4f05-a52d-eb76ad56cae7.jpg?1673148281',
         'GUR',
         NULL
-    );
---@block
-INSERT INTO Deck (
-        DeckID,
-        DeckName,
-        DeckOwnerID,
-        DeckImgURL,
-        DeckColor,
-        DeckURL
-    )
-VALUES (
+    ),
+    (
         3,
         'Arna',
         5,
@@ -190,17 +101,8 @@ VALUES (
         'https://cards.scryfall.io/art_crop/front/a/5/a577ba08-0aa8-45be-aa83-d5078770127c.jpg?1736468492',
         '{3}RWB',
         NULL
-    );
---@block
-INSERT INTO Deck (
-        DeckID,
-        DeckName,
-        DeckOwnerID,
-        DeckImgURL,
-        DeckColor,
-        DeckURL
-    )
-VALUES (
+    ),
+    VALUES (
         11,
         'Eluge',
         6,
@@ -504,3 +406,75 @@ VALUES (
         'G',
         NULL
     );
+--@block
+CREATE TABLE MTGMatches (
+    MatchID INT PRIMARY KEY,
+    DeckLists TEXT NOT NULL,
+    Date TEXT,
+    WinnerID INT,
+    FOREIGN KEY (WinnerID) REFERENCES Deck(DeckID)
+);
+--@block
+CREATE TABLE DeckWin (
+    MatchID INT,
+    DeckID INT,
+    OpponentDeckID TEXT,
+    -- (List of opponents lost: 2,3,4)
+    Result INT NOT NULL,
+    Date TEXT NOT NULL,
+    PRIMARY KEY (MatchID, DeckID),
+    FOREIGN KEY (MatchID) REFERENCES MTGMatches(MatchID),
+    FOREIGN KEY (DeckID) REFERENCES Deck(DeckID)
+);
+--@block
+CREATE TABLE DeckLose (
+    MatchID INT,
+    DeckID INT,
+    OpponentDeckID INT,
+    Result INT NOT NULL,
+    Date Text NOT NULL,
+    PRIMARY KEY (MatchID, DeckID),
+    FOREIGN KEY (MatchID) REFERENCES MTGMatches(MatchID),
+    FOREIGN KEY (DeckID) REFERENCES Deck(DeckID)
+);
+--@block
+CREATE INDEX idx_deck_owner ON Deck(DeckOwnerID);
+CREATE INDEX idx_match_winner ON MTGMatches(WinnerID);
+CREATE INDEX idx_deckwin_match ON DeckWin(MatchID);
+CREATE INDEX idx_decklose_match ON DeckLose(MatchID);
+--@block
+ALTER TABLE DeckWin
+ADD CONSTRAINT chk_result CHECK (Result IN (0, 1, 2));
+-- 1 for win, 2 for draw, 0 for loss
+--@block
+ALTER TABLE DeckLose
+ADD CONSTRAINT chk_lose_result CHECK (Result IN (0, 1, 2, 3));
+-- 1 for win, 2 for draw, 0 for loss
+SELECT *
+FROM mtgmatches --@block
+    -- Insert into Player table
+INSERT INTO Player (PlayerID, Name)
+VALUES (1, 'Thomas'),
+    (2, 'Peter'),
+    (3, 'Kristian'),
+    (4, 'Leon'),
+    (5, 'Khang'),
+    (6, 'Olli'),
+    (7, 'Steven'),
+    (8, 'Hoang');
+--@block
+CREATE TABLE Playgroup (
+    GroupID INT PRIMARY KEY,
+    GroupName CHAR(128) NOT NULL
+);
+CREATE TABLE PlaygroupPlayer (
+    GroupID INT,
+    PlayerID INT,
+    PRIMARY KEY (GroupID, PlayerID),
+    FOREIGN KEY (GroupID) REFERENCES Playgroup(GroupID),
+    FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID)
+);
+INSERT INTO Playgroup (GroupID, GroupName)
+VALUES (1, 'Wartenberg Group'),
+    (2, 'Leon Group');
+--@block
