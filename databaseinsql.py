@@ -6,9 +6,10 @@ def connect_to_database():
         # Establish the database connection
         connection = mysql.connector.connect(
             host='localhost',
-            database='mtgmatches', 
+            database='mtgmatches2', 
             user='root', 
-            password='101010' 
+            password='101010',
+            auth_plugin='mysql_native_password' 
         )
 
         if connection.is_connected():
@@ -66,105 +67,211 @@ def query_requests(connection, query):
             print("MySQL connection is closed")
             return data
 
-def all_info_matches_of_deck(deckname):
+def get_deck_id(deckname, database_connection=None):
     connection = connect_to_database()
+    data = []
+    if database_connection is not None:
+        connection = database_connection
+
+    cursor = None
     try:
-        data = []
+        if connection is None:
+            print("Failed to establish a database connection.")
+            return
+
         cursor = connection.cursor()
-        query = f"SELECT * FROM mtgmatches WHERE Decklist LIKE '%{deckname}%' ORDER BY date ASC;"
-        cursor.execute(query)
-        data = cursor.fetchall()
-        return data
+        query = "SELECT DeckID FROM deck WHERE Deckname = %s"
+        cursor.execute(query, (deckname,))
+
+        # Fetch all rows from the executed query
+        rows = cursor.fetchall()
+        for row in rows:
+            print(f'this is row: {row}')
+            data.append(row[0])
+            
+        if data == []:
+            print(f'Deck {deckname} is not in database')
+            return None
+        else:
+            print(data[0])
+            return(data[0])
+
     except Error as e:
         print(f"Error: {e}")
 
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+            print("MySQL connection is closed")
 
-def calculate_win_rate_deck(deckname):
-    data = all_info_matches_of_deck(deckname=deckname)
-    total_matches = 0
-    matches_won = 0
+def add_mtgmatch(decklist, winnerID, matchID = None, date = None, database_connection=None ):
+    connection = connect_to_database()
+    
+    if database_connection is not None:
+        connection = database_connection
 
-    deckname = deckname.strip()  # Strip whitespace from the deckname
+    cursor = None
+    try:
+        if connection is None:
+            print("Failed to establish a database connection.")
+            return
 
-    for match in data:
-        decklist = [name.strip() for name in match[1].split(',')]  # Strip whitespace from each name in the decklist
-        result = list(map(int, match[2].strip('[]').split(',')))
+        cursor = connection.cursor()
+        id_qeuery = "SELECT COUNT(MatchID) FROM mtgmatches;"
+        id = matchID
+        if id == None:
+            id = query_requests(query= id_qeuery,connection=connection)
+            print(id[0])
+        #query = "INSERT Into MTGMatches (matchid, decklists,data,winnerid) \n" \
+        #"VALUES (%s, %s, %s, %s)"
+        #cursor.execute(query, (decklist,))
 
-        if deckname in decklist:
-            total_matches += 1
-            player_index = decklist.index(deckname)
-            if result[player_index] == 1:
-                matches_won += 1
+        
 
-    if total_matches == 0:
-        return 0
+    except Error as e:
+        print(f"Error: {e}")
 
-    win_rate = (matches_won / total_matches) * 100
-    return win_rate
+def convert_decklist_to_array(decklist):
+    array = decklist.split(",")
+    array = [element.strip() for element in array]
+    print(array)
+    return array
 
-def track_losses_against_decks(deckname):
-    data = all_info_matches_of_deck(deckname=deckname)
-    losses = {}
+def deckarray_to_deck_id_array(decklist_array):
+    deck_ids = []
+    for deck in decklist_array:
+        deck_id = get_deck_id(deck)
+        if deck_id == None:
+            print("Please add the missing deck to the table. Metrics will fail otherwise")
+        deck_ids.append(deck_id)
+    print(deck_ids)
+    return deck_ids
 
-    deckname = deckname.strip()  # Strip whitespace from the deckname
+def delete_max_matchid_entry(table_name):
+    connection = None
+    try:
+        # Connect to the database
+        connection = connect_to_database()
+        cursor = connection.cursor()
 
-    for match in data:
-        decklist = [name.strip() for name in match[1].split(',')]  # Strip whitespace from each name in the decklist
-        result = list(map(int, match[2].strip('[]').split(',')))
+        # SQL query to delete the entry with the maximum matchid
+        query = f"""
+            DELETE FROM {table_name}
+            WHERE matchid = (
+                SELECT max_matchid FROM (
+                    SELECT MAX(matchid) AS max_matchid FROM {table_name}
+                ) AS temp
+            );
+        """
 
-        if deckname in decklist:
-            player_index = decklist.index(deckname)
-            if result[player_index] == 0:  # Ghired lost the match
-                for opponent in decklist:
-                    if opponent != deckname:
-                        if opponent not in losses:
-                            losses[opponent] = 0
-                        losses[opponent] += 1
+        # Execute the query
+        cursor.execute(query)
 
-    return losses
+        # Commit the changes to the database
+        connection.commit()
 
-def calculate_win_rate_against_decks(deckname, data = None ):
-    data = data if data is not None else all_info_matches_of_deck(deckname=deckname)
-    win_loss_record = {}
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()  # Rollback in case of error
 
-    deckname = deckname.strip()  # Strip whitespace from the deckname
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+            print("MySQL connection is closed")
 
-    for match in data:
-        decklist = [name.strip() for name in match[1].split(',')]  # Strip whitespace from each name in the decklist
-        result = list(map(int, match[2].strip('[]').split(',')))
 
-        if deckname in decklist:
-            player_index = decklist.index(deckname)
-            for opponent in decklist:
-                if opponent != deckname:
-                    if opponent not in win_loss_record:
-                        win_loss_record[opponent] = {'wins': 0, 'losses': 0}
-                    if result[player_index] == 1:  # Ghired won the match
-                        win_loss_record[opponent]['wins'] += 1
-                    else:  # Ghired lost the match
-                        win_loss_record[opponent]['losses'] += 1
 
-    win_rate_record = {}
-    for opponent, record in win_loss_record.items():
-        total_matches = record['wins'] + record['losses']
-        if total_matches > 0:
-            win_rate = (record['wins'] / total_matches) * 100
+
+def add_mtgmatches_entry(decklists, winnerID, date=None, matchID=None):
+    connection = None
+    try:
+        # Connect to the database
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        # Query to get the maximum entry count
+        max_entry_count_query = "SELECT COUNT(*) FROM mtgmatches"
+        cursor.execute(max_entry_count_query)
+        max_entry_result = cursor.fetchone()
+        pos_match_id = max_entry_result[0]
+
+        # Prepare data for insertion
+        data = []
+        if matchID is not None:
+            data.append(matchID)
         else:
-            win_rate = 0
-        win_rate_record[opponent] = win_rate
+            data.append(pos_match_id + 1)  # Increment to get the next ID
+        data.append(decklists)
+        if date is None:
+            current_date = "25-05-2025"  # Use the correct date format for your database
+        else:
+            current_date = date
+        data.append(current_date)
+        data.append(winnerID)
+        print(data)
 
-    return win_rate_record
+        # SQL query to insert data
+        query = "INSERT INTO mtgmatches (matchid, decklists, date, winnerID) VALUES (%s, %s, %s, %s);"
+        cursor.execute(query, tuple(data))
 
-def use_cases_examples():
-    win_rate_record = calculate_win_rate_against_decks('Ghired')
-    print("Win rate for 'Ghired' against decks:")
-    for opponent, win_rate in win_rate_record.items():
-        print(f"{opponent}: {win_rate:.2f}%")
+        # Commit the changes to the database
+        connection.commit()
 
-    print("Losses for 'Ghired' against decks:")
-    losses = track_losses_against_decks('Ghired')
-    for opponent, count in losses.items():
-        print(f"{opponent}: {count} losses")
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()  # Rollback in case of error
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+            print("MySQL connection is closed")
+
+def add_deck_win_entry(matchID, deckID, deckopponentID, result, date = None, ):
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        query = "INSERT Into deckwin (matchid, deckid, opponentDeckID,result, date) \n" \
+            "VALUES (%s, %s, %s, %s, %s);"
+    
+        if date == None:
+            current_date = "25-05-2025"
+        else:
+            current_date = date
+        data = []
+        data.append(matchID)
+        data.append(deckID)
+        data.append(deckopponentID)
+        data.append(result)
+        data.append(current_date)
+        print(data)
+        cursor.execute(query, tuple(data))
+        connection.commit()
+
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()  # Rollback in case of error
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+            print("MySQL connection is closed")
+        
 
 if __name__ == "__main__":
-    use_cases_examples()    
+    connection = connect_to_database()
+    test_array = convert_decklist_to_array('Ghired, Obeka 2, Obeka, Bethor')
+    #add_deck_win_entry(matchID = 1, deckID = 1, deckopponentID =2, result= 1, date = None)
+    delete_max_matchid_entry('deckwin')
+

@@ -478,3 +478,5 @@ INSERT INTO Playgroup (GroupID, GroupName)
 VALUES (1, 'Wartenberg Group'),
     (2, 'Leon Group');
 --@block
+SELECT COUNT(MatchID)
+FROM mtgmatches;
