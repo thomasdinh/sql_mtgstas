@@ -480,3 +480,7 @@ VALUES (1, 'Wartenberg Group'),
 --@block
 SELECT COUNT(MatchID)
 FROM mtgmatches;
+--@block
+ALTER TABLE mtgmatches
+ADD groupID INT,
+    ADD CONSTRAINT fk_group FOREIGN KEY (groupID) REFERENCES Playgroup(GroupID);

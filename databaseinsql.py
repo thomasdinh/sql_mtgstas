@@ -203,9 +203,7 @@ def delete_max_matchid_entry_deckwin():
             print("MySQL connection is closed")
 
 
-
-
-def add_mtgmatches_entry(decklists, winnerID, date=None, matchID=None):
+def add_mtgmatches_entry(decklists, winnerID, date=None, matchID=None, groupID = None):
     connection = None
     try:
         # Connect to the database
@@ -231,10 +229,14 @@ def add_mtgmatches_entry(decklists, winnerID, date=None, matchID=None):
             current_date = date
         data.append(current_date)
         data.append(winnerID)
+        if groupID == None:
+            data.append(1)
+        else:
+            data.append(groupID)
         print(data)
 
         # SQL query to insert data
-        query = "INSERT INTO mtgmatches (matchid, decklists, date, winnerID) VALUES (%s, %s, %s, %s);"
+        query = "INSERT INTO mtgmatches (matchid, decklists, date, winnerID, groupID) VALUES (%s, %s, %s, %s, %s);"
         cursor.execute(query, tuple(data))
 
         # Commit the changes to the database
@@ -277,8 +279,6 @@ def del_mtgmatches_entry(matchID= None):
         if connection is not None:
             connection.rollback()  # Rollback in case of error
 
-    
-
 def add_deck_win_entry(matchID, deckID, deckopponentID, result, date = None, ):
     try:
         connection = connect_to_database()
@@ -299,6 +299,43 @@ def add_deck_win_entry(matchID, deckID, deckopponentID, result, date = None, ):
         data.append(current_date)
         print(data)
         cursor.execute(query, tuple(data))
+        connection.commit()
+
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()  # Rollback in case of error
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+            print("MySQL connection is closed")
+
+def delete_deck_win(matchID=None):
+    connection = None
+    cursor = None
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        if matchID is not None:
+            query = "DELETE FROM deckwin WHERE matchid = %s;"
+            cursor.execute(query, (matchID,))
+        else:
+            # Find the maximum matchID
+            query_max_id = "SELECT MAX(matchid) FROM deckwin;"
+            cursor.execute(query_max_id)
+            max_id = cursor.fetchone()[0]
+
+            if max_id is not None:
+                query = "DELETE FROM deckwin WHERE matchid = %s;"
+                cursor.execute(query, (max_id,))
+                print(f"Deleted entry with max matchID: {max_id}")
+            else:
+                print("No entries found in the table.")
+
         connection.commit()
 
     except Exception as e:
@@ -385,11 +422,45 @@ def delete_deck_lose(matchID=None):
         if connection is not None and connection.is_connected():
             connection.close()
             print("MySQL connection is closed")
-     
+
+def add_player_to_playgroup(playerID, groupID):
+    query = f"INSERT INTO playgroupplayer (GroupID, playerID) VALUES (%s, %s);"
+    connection = None
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        print(f'Add to playgroupplayer : {groupID}, {playerID}')
+        cursor.execute(query, (groupID,playerID))
+        connection.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()
+    finally:
+        if connection is not None:
+            connection.close() 
+  
+def del_player_from_playgroup(groupID,playerID):
+    query = f'DELETE FROM playgroupplayer WHERE groupid = %s AND playerid =%s;'
+    connection = None
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        print(f'DEL player {playerID} from playgroup : {groupID}')
+        cursor.execute(query, (groupID,playerID))
+        connection.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()
+    finally:
+        if connection is not None:
+            connection.close() 
 
 if __name__ == "__main__":
     connection = connect_to_database()
-    delete_deck_lose()
+    add_mtgmatches_entry(decklists= '2,5,7,10', winnerID= 5, date=None, matchID=None, groupID = None)
+
     
-    
+     
 
