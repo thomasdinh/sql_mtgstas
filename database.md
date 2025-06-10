@@ -39,6 +39,10 @@
 | Result         | INT  | NOT NULL, CHECK (Result IN (0, 1, 2))          |
 | Date           | TEXT | NOT NULL                                       |
 
+0 - Draw
+1 - Win
+2 - Placeholder
+
 ### DeckLose
 
 | Column         | Type | Constraints                                    |
@@ -48,6 +52,10 @@
 | OpponentDeckID | INT  |                                                |
 | Result         | INT  | NOT NULL, CHECK (Result IN (0, 1, 2, 3))       |
 | Date           | TEXT | NOT NULL                                       |
+
+0 - Draw
+1 - Lose
+2,3 - Placeholder
 
 ## Indexes
 

@@ -563,6 +563,92 @@ def get_match_result(decklists,result):
     except ValueError:
         print(f"'No winner' is not in the list.")
 
+def add_match_win(matchID, DeckID, OpponentDeckID, Result = None, Date = None):
+    cur_date = get_current_date()
+    cur_result = 1
+
+    if Date != None:
+        cur_date = Date
+    
+    if Result != None:
+        cur_result = Result
+    
+    query = f"INSERT INTO deckwin (MatchID, DeckID, OpponentDeckID, Result, Date) VALUES (%s, %s, %s, %s, %s);"
+    connection = None
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        print(f'Add to deckwin : {matchID}, {DeckID}')
+        cursor.execute(query, (matchID, DeckID, OpponentDeckID, cur_result, cur_date ))
+        connection.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()
+    finally:
+        if connection is not None:
+            connection.close() 
+    
+def del_match_win_entry(matchID):
+    query = f"DELETE FROM deckwin WHERE MatchID = %s;"
+    connection = None
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        print(f'DEL from deckwin : {matchID}')
+        cursor.execute(query, (matchID,))
+        connection.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()
+    finally:
+        if connection is not None:
+            connection.close()
+
+def add_deck_lose(matchID, DeckID, OpponentDeckID, Result = None, Date = None):
+    cur_date = get_current_date()
+    cur_result = 1
+
+    if Date != None:
+        cur_date = Date
+    
+    if Result != None:
+        cur_result = Result
+    
+    query = f"INSERT INTO decklose (MatchID, DeckID, OpponentDeckID, Result, Date) VALUES (%s, %s, %s, %s, %s);"
+    connection = None
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        print(f'Add to decklose : {matchID}, {DeckID}')
+        cursor.execute(query, (matchID, DeckID, OpponentDeckID, cur_result, cur_date ))
+        connection.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()
+    finally:
+        if connection is not None:
+            connection.close()
+
+def del_decklose_entry(matchID):
+    query = f"DELETE FROM decklose WHERE MatchID = %s;"
+    connection = None
+    try:
+        connection = connect_to_database()
+        cursor = connection.cursor()
+        print(f'DEL from decklose : matchid: {matchID}')
+        cursor.execute(query, (matchID,))
+        connection.commit()
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()
+    finally:
+        if connection is not None:
+            connection.close()  
+
 '''
 "match_id","Decklist","match_result","date","group_id","comment"
 1,"Otharri, Tymna, Urza","1, 0, 0","20.10.24",0,""
@@ -600,7 +686,7 @@ def get_all_player_ids(playername_array):
 
 if __name__ == "__main__":
     connection = connect_to_database()
-    get_match_result(['Thomas','peter','olli'],[0,1,0])
+    del_decklose_entry(1)
     
      
 
