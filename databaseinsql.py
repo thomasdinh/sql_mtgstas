@@ -267,7 +267,7 @@ def del_mtgmatches_entry(matchID= None):
             connection.close()
             #print("MySQL connection is closed")
 
-def delete_deck_win(matchID=None):
+def del_deck_win(matchID=None):
     connection = None
     cursor = None
     try:
@@ -541,23 +541,6 @@ def add_match_win(matchID, DeckID, OpponentDeckID, Result = None, Date = None):
     finally:
         if connection is not None:
             connection.close() 
-    
-def del_match_win_entry(matchID):
-    query = f"DELETE FROM deckwin WHERE MatchID = %s;"
-    connection = None
-    try:
-        connection = connect_to_database()
-        cursor = connection.cursor()
-        print(f'DEL from deckwin : {matchID}')
-        cursor.execute(query, (matchID,))
-        connection.commit()
-    except Exception as e:
-        print(f"Error: {e}")
-        if connection is not None:
-            connection.rollback()
-    finally:
-        if connection is not None:
-            connection.close()
 
 def add_deck_lose(matchID, DeckID, OpponentDeckID, Result = None, Date = None):
     cur_date = get_current_date()
@@ -584,23 +567,6 @@ def add_deck_lose(matchID, DeckID, OpponentDeckID, Result = None, Date = None):
     finally:
         if connection is not None:
             connection.close()
-
-def del_decklose_entry(matchID):
-    query = f"DELETE FROM decklose WHERE MatchID = %s;"
-    connection = None
-    try:
-        connection = connect_to_database()
-        cursor = connection.cursor()
-        print(f'DEL from decklose : matchid: {matchID}')
-        cursor.execute(query, (matchID,))
-        connection.commit()
-    except Exception as e:
-        print(f"Error: {e}")
-        if connection is not None:
-            connection.rollback()
-    finally:
-        if connection is not None:
-            connection.close()  
 
 '''
 "match_id","Decklist","match_result","date","group_id","comment"
@@ -714,7 +680,7 @@ def delete_all_entries(table_name):
             #print("MySQL connection is closed")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":    
     pass
 
     
