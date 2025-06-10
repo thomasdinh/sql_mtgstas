@@ -1,4 +1,5 @@
 import mysql.connector
+import array
 from datetime import datetime
 from mysql.connector import Error
 
@@ -457,10 +458,149 @@ def del_player_from_playgroup(groupID,playerID):
         if connection is not None:
             connection.close() 
 
+def get_player_id(name):
+
+    if name is None:
+        return 0
+    connection = None
+
+    try:
+        # Connect to the database
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        # Query to get the maximum entry count
+        query = "SELECT * FROM player WHERE name = %s"
+        cursor.execute(query, (name,))
+        player_id_result = cursor.fetchone()
+        player_id = player_id_result[0]
+        #print(player_id)
+        return player_id
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()  # Rollback in case of error
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+            print("MySQL connection is closed")
+
+def get_last_match_id():
+    connection = None
+    try:
+        # Connect to the database
+        connection = connect_to_database()
+        cursor = connection.cursor()
+
+        # Query to get the maximum entry count
+        max_entry_count_query = "SELECT COUNT(*) FROM mtgmatches"
+        cursor.execute(max_entry_count_query)
+        max_entry_result = cursor.fetchone()
+        pos_match_id = max_entry_result[0]
+        print(f'Last match_id: {pos_match_id}')
+        return pos_match_id
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        if connection is not None:
+            connection.rollback()  # Rollback in case of error
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if connection is not None and connection.is_connected():
+            connection.close()
+            print("MySQL connection is closed")
+
+def get_match_result(decklists,result):
+    '''
+    returns:
+          - Deck_id of the winner
+          - Deck_ids of losing decks in a array
+    No draws build in yet
+    '''
+    winner = 1
+    loser_decks = []
+    
+    if len(decklists) < 2:
+        raise ValueError('Error: There are no decks provided! Or 2 decks are needed at least!')
+    if len(result) != len(decklists):
+        raise ValueError('Error: Matchresult is missing or results are missing!')
+        
+    
+    arg_decklists_type = isinstance(decklists, list)
+    arg_result_type = isinstance(result, list)
+
+    if arg_decklists_type == False:
+        raise ValueError('Error:  decklists is not a list!')
+    if arg_result_type == False:
+        raise ValueError('Error: result is not a list!')
+    
+    #print(f'{decklists[0]} type: {type(decklists[0])}')
+    deck_ids = []
+    if isinstance(decklists[0],str):
+        deck_ids = get_all_player_ids(decklists)
+        print(f'Decklist is in Strng: {deck_ids}')
+    elif isinstance( decklists[0],int):
+        deck_ids = decklists
+        print(f'Decklist is in int: {deck_ids}')
+    else:
+        raise Error(f'Decklist element: {decklists[0]} is not in str or int, therefore cannot be evaluated!')
+    
+    #find winner and losers
+    try:
+        winner_index = result.index(1)
+        #print(f"The index of {decklists[winner_index]} is {winner_index}.")
+        winner = deck_ids[winner_index]
+        loser_decks = deck_ids[:winner_index] + deck_ids[winner_index+1:]
+        print(f'Winner: {winner} losers:{loser_decks}')
+        return winner, loser_decks
+
+    except ValueError:
+        print(f"'No winner' is not in the list.")
+
+'''
+"match_id","Decklist","match_result","date","group_id","comment"
+1,"Otharri, Tymna, Urza","1, 0, 0","20.10.24",0,""
+'''           
+def eval_csv_line(decklist, match_result, match_id = None, date = None, group_id = None, comment = None):
+    new_match_id = get_last_match_id() + 1
+    new_date = get_current_date()
+    new_group_id = 1
+    new_comment = ""
+    winner = 0
+    losers = []
+    
+    if match_id != None:
+        new_match_id = match_id
+    
+    if date != None:
+        new_date = date
+
+    if group_id != None:
+        new_group_id = group_id
+
+    if comment != None:
+        new_comment= comment
+
+    winner, losers = get_match_result(decklists= decklist, result= match_result)
+
+
+def get_all_player_ids(playername_array):
+    player_ids = []
+    for player in playername_array:
+        player_id = get_player_id(player)
+        player_ids.append(player_id)
+    print(player_ids)
+    return player_ids
+
 if __name__ == "__main__":
     connection = connect_to_database()
-    add_mtgmatches_entry(decklists= '2,5,7,10', winnerID= 5, date=None, matchID=None, groupID = None)
-
+    get_match_result(['Thomas','peter','olli'],[0,1,0])
     
      
 
