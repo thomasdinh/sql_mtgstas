@@ -22,12 +22,13 @@
 
 ### MTGMatches
 
-| Column    | Type | Constraints                |
-| --------- | ---- | -------------------------- |
-| MatchID   | INT  | PRIMARY KEY                |
-| DeckLists | TEXT | NOT NULL                   |
-| Date      | TEXT |                            |
-| WinnerID  | INT  | FOREIGN KEY (Deck(DeckID)) |
+| Column    | Type | Constraints                      |
+| --------- | ---- | -------------------------------- |
+| MatchID   | INT  | PRIMARY KEY                      |
+| DeckLists | TEXT | NOT NULL                         |
+| Date      | TEXT |                                  |
+| WinnerID  | INT  | FOREIGN KEY (Deck(DeckID))       |
+| GroupID   | INT  | FOREIGN KEY (Playgroup(groupID)) |
 
 ### DeckWin
 

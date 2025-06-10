@@ -484,3 +484,14 @@ FROM mtgmatches;
 ALTER TABLE mtgmatches
 ADD groupID INT,
     ADD CONSTRAINT fk_group FOREIGN KEY (groupID) REFERENCES Playgroup(GroupID);
+--@block
+CREATE TABLE DeckWin (
+    MatchID INT,
+    DeckID INT,
+    OpponentDeckID INT,
+    Result INT NOT NULL,
+    Date TEXT NOT NULL,
+    PRIMARY KEY (MatchID, OpponentDeckID),
+    FOREIGN KEY (MatchID) REFERENCES MTGMatches(MatchID),
+    FOREIGN KEY (DeckID) REFERENCES Deck(DeckID)
+);

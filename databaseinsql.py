@@ -111,33 +111,13 @@ def get_deck_id(deckname, database_connection=None):
             connection.close()
             print("MySQL connection is closed")
 
-def add_mtgmatch(decklist, winnerID, matchID = None, date = None, database_connection=None ):
-    connection = connect_to_database()
+def get_all_deck_ids(decknamelist):
+    deck_array = []
+    for deck in decknamelist:
+        deck_array.append(get_deck_id(deck))
+
+    return deck_array
     
-    if database_connection is not None:
-        connection = database_connection
-
-    cursor = None
-    try:
-        if connection is None:
-            print("Failed to establish a database connection.")
-            return
-
-        cursor = connection.cursor()
-        id_qeuery = "SELECT COUNT(MatchID) FROM mtgmatches;"
-        id = matchID
-        if id == None:
-            id = query_requests(query= id_qeuery,connection=connection)
-            print(id[0])
-        #query = "INSERT Into MTGMatches (matchid, decklists,data,winnerid) \n" \
-        #"VALUES (%s, %s, %s, %s)"
-        #cursor.execute(query, (decklist,))
-
-        
-
-    except Error as e:
-        print(f"Error: {e}")
-
 def convert_decklist_to_array(decklist):
     array = decklist.split(",")
     array = [element.strip() for element in array]
@@ -207,7 +187,6 @@ def delete_max_matchid_entry_deckwin():
 def add_mtgmatches_entry(decklists, winnerID, date=None, matchID=None, groupID = None):
     connection = None
     try:
-        # Connect to the database
         connection = connect_to_database()
         cursor = connection.cursor()
 
@@ -217,16 +196,18 @@ def add_mtgmatches_entry(decklists, winnerID, date=None, matchID=None, groupID =
         max_entry_result = cursor.fetchone()
         pos_match_id = max_entry_result[0]
 
-        # Prepare data for insertion
+        # Convert the decklists list to a comma-separated string
+        decklists_str = ', '.join(decklists)
+
         data = []
         if matchID is not None:
             data.append(matchID)
         else:
             data.append(pos_match_id + 1)  # Increment to get the next ID
-        data.append(decklists)
+        data.append(decklists_str)
         if date is None:
-            current_date = get_current_date()  # Use the correct date format for your database
-        else:
+            current_date = get_current_date()
+        else: 
             current_date = date
         data.append(current_date)
         data.append(winnerID)
@@ -279,34 +260,7 @@ def del_mtgmatches_entry(matchID= None):
         print(f"Error: {e}")
         if connection is not None:
             connection.rollback()  # Rollback in case of error
-
-def add_deck_win_entry(matchID, deckID, deckopponentID, result, date = None, ):
-    try:
-        connection = connect_to_database()
-        cursor = connection.cursor()
-
-        query = "INSERT Into deckwin (matchid, deckid, opponentDeckID,result, date) \n" \
-            "VALUES (%s, %s, %s, %s, %s);"
     
-        if date == None:
-            current_date = "25-05-2025"
-        else:
-            current_date = date
-        data = []
-        data.append(matchID)
-        data.append(deckID)
-        data.append(deckopponentID)
-        data.append(result)
-        data.append(current_date)
-        print(data)
-        cursor.execute(query, tuple(data))
-        connection.commit()
-
-    except Exception as e:
-        print(f"Error: {e}")
-        if connection is not None:
-            connection.rollback()  # Rollback in case of error
-
     finally:
         if cursor is not None:
             cursor.close()
@@ -543,7 +497,7 @@ def get_match_result(decklists,result):
     #print(f'{decklists[0]} type: {type(decklists[0])}')
     deck_ids = []
     if isinstance(decklists[0],str):
-        deck_ids = get_all_player_ids(decklists)
+        deck_ids = get_all_deck_ids(decknamelist= decklists)
         print(f'Decklist is in Strng: {deck_ids}')
     elif isinstance( decklists[0],int):
         deck_ids = decklists
@@ -621,7 +575,7 @@ def add_deck_lose(matchID, DeckID, OpponentDeckID, Result = None, Date = None):
     try:
         connection = connect_to_database()
         cursor = connection.cursor()
-        print(f'Add to decklose : {matchID}, {DeckID}')
+        print(f'Add to decklose : match:{matchID},loser: {DeckID}, winner: {OpponentDeckID}')
         cursor.execute(query, (matchID, DeckID, OpponentDeckID, cur_result, cur_date ))
         connection.commit()
     except Exception as e:
@@ -674,6 +628,12 @@ def eval_csv_line(decklist, match_result, match_id = None, date = None, group_id
         new_comment= comment
 
     winner, losers = get_match_result(decklists= decklist, result= match_result)
+    add_mtgmatches_entry(decklists=decklist, winnerID= winner, matchID= new_match_id, date = new_date, groupID=new_group_id)
+    
+    for loser in losers:
+        add_match_win(matchID= new_match_id,DeckID= winner, OpponentDeckID= loser, Date= new_date)
+        add_deck_lose(matchID= new_match_id, DeckID= loser, OpponentDeckID= winner, Date= new_date)
+    
 
 
 def get_all_player_ids(playername_array):
@@ -686,7 +646,5 @@ def get_all_player_ids(playername_array):
 
 if __name__ == "__main__":
     connection = connect_to_database()
-    del_decklose_entry(1)
     
-     
-
+    
