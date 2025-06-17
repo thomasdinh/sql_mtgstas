@@ -1,5 +1,4 @@
 import mysql.connector
-import array
 from datetime import datetime
 from mysql.connector import Error
 
@@ -180,8 +179,7 @@ def delete_max_matchid_entry_deckwin():
             cursor.close()
         if connection is not None and connection.is_connected():
             connection.close()
-            print("MySQL connection is closed")
-
+            # print("MySQL connection is closed")
 
 def add_mtgmatches_entry(decklists, winnerID, date=None, matchID=None, groupID=None):
     connection = None
@@ -678,7 +676,6 @@ def delete_all_entries(table_name):
         if connection is not None:
             connection.close()
             #print("MySQL connection is closed")
-
 
 if __name__ == "__main__":    
     pass
