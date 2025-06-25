@@ -17,14 +17,12 @@ def read_csv_mtgmatches(filename = None):
     else:
         filepath = filename
     data = pd.read_csv(filepath)
-        # Iterate over the DataFrame and apply the eval_csv_line function
+    
     for index, row in data.iterrows():
     # Convert the decklist and match_result strings to lists
         decklist_1 = [deck.strip() for deck in row['Decklist'].split(',')]
         stripped_results = parse_match_result(row['match_result'])
-    
-        print(decklist_1)
-        print(stripped_results)
+
 
         eval_csv_line(
             decklist= decklist_1,
