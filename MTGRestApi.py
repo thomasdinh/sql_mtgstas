@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="MTG Match Analysis API",
     description="REST API for analyzing Magic: The Gathering multiplayer matches",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 #CORS middleware
@@ -69,7 +69,7 @@ class Match(BaseModel):
     id: int
     deck_lists: str
     date: str
-    winner_deck_id: int
+    winner_deck_id: Optional[int] = None
     group_id: int
     winner_deck_name: Optional[str] = None
     winner_player_name: Optional[str] = None
@@ -177,8 +177,8 @@ async def check_connection():
         raise HTTPException(status_code=503, detail=f"Database connection failed: {str(e)}")
     
 
-# Player endpoints
-@app.get("/api/players", response_model=List[Player])
+#Player
+@app.get("/api/all_players", response_model=List[Player])
 async def get_players():
     """Get all players"""
     try:
@@ -188,12 +188,57 @@ async def get_players():
                 players = []
                 for row in players_result:
                     player = Player(id=row[0], name=row[1])
-                    print(f"{row[0]} (ID: row[1])")
+                    print(f"Id: {row[0]} (Name: {row[1]})")
                     players.append(player)
                 return players
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+#Player
+@app.get("/api/player/{player_id}",response_model=Player)
+async def get_player(player_id):
+    try:
+        with get_connection() as connection:
+            with exec_query("SELECT PlayerID, Name FROM Player WHERE PlayerID = %s",params= [player_id], connection= connection) as cursor:
+                
+                result = cursor.fetchone()
+                
+                if result is None:
+                    raise HTTPException(
+                        status_code=404, 
+                        detail=f"Player with ID {player_id} not found"
+                    )
+                print(result)
+                return Player(id=result[0], name=result[1])
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Database error: {str(e)}"
+        )
+#Matches
+@app.get("/api/matches", response_model=List[Match])
+async def get_all_matches():
+    try:
+        with get_connection() as connection:
+            with exec_query(query="SELECT * FROM MTGMatches", params= None, connection= connection) as cursor:
+                result = cursor.fetchall()
+                matches = []
+                for row in result:
+
+                    match = Match(id = row[0], deck_lists= row[1],
+                                   date= row[2],
+                                    winner_deck_id= row[3] if row[3] is not None else None,
+                                      group_id= row[4] )
+                    print(match)
+                    matches.append(match)
+                return matches
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Database error: {str(e)}"
+        )
 
 # Run the application
 if __name__ == "__main__":
