@@ -227,9 +227,9 @@ async def get_all_matches():
                 for row in result:
 
                     match = Match(id = row[0], deck_lists= row[1],
-                                   date= row[2],
-                                    winner_deck_id= row[3] if row[3] is not None else None,
-                                      group_id= row[4] )
+                                date= row[2],
+                                winner_deck_id= row[3] if row[3] is not None else None,
+                                group_id= row[4] )
                     print(match)
                     matches.append(match)
                 return matches
@@ -239,8 +239,28 @@ async def get_all_matches():
             status_code=500, 
             detail=f"Database error: {str(e)}"
         )
+@app.get("/api/match/{match_id}", response_model= Match)
+async def get_match(match_id):
+    try:
+        with get_connection() as connection:
+            with exec_query("SELECT * FROM MTGMatches WHERE MatchID = %s",params= [match_id], connection= connection) as cursor:
+                
+                result = cursor.fetchone()
+                
+                if result is None:
+                    raise HTTPException(
+                        status_code=404, 
+                        detail=f"Match with ID {match_id} not found"
+                    )
+                print(result)
+                return Match(id=result[0],deck_lists=result[1], date=result[2], winner_deck_id=result[3], group_id= result[4])
+    
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Database error: {str(e)}"
+        )
 
 # Run the application
-if __name__ == "__main__":
-    
+if __name__ == "__main__":   
     uvicorn.run(app, host="0.0.0.0", port=8000)
